@@ -1,8 +1,11 @@
+const os = require('os')
 const path = require("path")
 const ESLINT_PLUGIN = require("eslint-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin")
 const MiniCssExtractPlugin =  require('mini-css-extract-plugin')
 const CssMinmizePlugin = require("css-minimizer-webpack-plugin")
+const threads = os.cpus().length // cpu核数
+const TerserWebpackPlugin = require('terser-webpack-plugin')
 function getStyleLoader(pre){
     return [
                     MiniCssExtractPlugin.loader,
@@ -86,13 +89,28 @@ module.exports = {
                 }
             },{
                 test: /\.js$/,
-                exclude: /node_modules/,
-                use:{
-                    loader: 'babel-loader',
+                include: path.resolve(__dirname,"../src"),
+                // exclude: /node_modules/,
+               use:[
+                {
+                    loader: 'thread-loader', // 开启多进程，注意特别耗时的时候用比较好 因为开启一个线程也需要时间
+                    options:{
+                        works: threads,
+
+                    }
+                },
+                {
+                 loader: 'babel-loader',
+                options:{
+                    // loader: 'babel-loader',
+                    cacheDirectory: true, // 开启babel缓存
+                    cacheCompression:false // 关闭缓存的压缩
                     // options: {
                     //     presets: ['@babel/preset-env']
                     // }
                 }
+            }
+               ]
             }
 
             ],
@@ -101,6 +119,9 @@ module.exports = {
         },
     plugins:[
         new ESLINT_PLUGIN({
+            threads,
+            cache:true,
+            cacheLocation: path.resolve(__dirname,"../node_modules/.cache/eslintcache"),
             // 检测哪些文件
             context: path.resolve(__dirname,"../src")
         }),
@@ -111,7 +132,18 @@ module.exports = {
             filename:"static/css/main.css"
         }),
         new CssMinmizePlugin(),
+        // new TerserWebpackPlugin({
+        //     parallel:threads
+        // })
     ],
+    optimization:{
+    minimizer:[
+    // 压缩js
+    new TerserWebpackPlugin({
+            parallel:threads
+        })
+    ]
+},
     devServer:{
         host:"localhost",
         port:"3080",

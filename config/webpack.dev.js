@@ -1,6 +1,9 @@
 const path = require("path")
+const os = require('os')
 const ESLINT_PLUGIN = require("eslint-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin")
+const threads = os.cpus().length // cpu核数
+const TerserWebpackPlugin = require('terser-webpack-plugin')
 module.exports = {
     entry:"./src/main.js",
     output:{
@@ -67,13 +70,28 @@ module.exports = {
                 }
             },{
                 test: /\.js$/,
-                exclude: /node_modules/,
-                use:{
-                    loader: 'babel-loader',
+                // exclude: /node_modules/,  // 排除node_modules下的文件，其他文件都处理
+                include: path.resolve(__dirname,"../src"),
+                 use:[
+                {
+                    loader: 'thread-loader', // 开启多进程，注意特别耗时的时候用比较好 因为开启一个线程也需要时间
+                    options:{
+                        works: threads,
+
+                    }
+                },
+                {
+                 loader: 'babel-loader',
+                options:{
+                    // loader: 'babel-loader',
+                    cacheDirectory: true, // 开启babel缓存
+                    cacheCompression:false // 关闭缓存的压缩
                     // options: {
                     //     presets: ['@babel/preset-env']
                     // }
                 }
+            }
+               ]
             }
 
             ],
@@ -83,12 +101,21 @@ module.exports = {
     plugins:[
         new ESLINT_PLUGIN({
             // 检测哪些文件
+               threads,
             context: path.resolve(__dirname,"../src")
         }),
         new HtmlWebpackPlugin({
             template: path.resolve(__dirname,"../public/index.html")
         })
     ],
+     optimization:{
+    minimizer:[
+    // 压缩js
+    new TerserWebpackPlugin({
+            parallel:threads
+        })
+    ]
+},
     devServer:{
         host:"localhost", // 启动服务器的地址
         port:"3080", // 启动服务器端口号
