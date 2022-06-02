@@ -4,6 +4,7 @@ const ESLINT_PLUGIN = require("eslint-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin")
 const threads = os.cpus().length // cpu核数
 const TerserWebpackPlugin = require('terser-webpack-plugin')
+const ImageMinimizerPlugin = require("image-minimizer-webpack-plugin")
 module.exports = {
     entry:"./src/main.js",
     output:{
@@ -85,7 +86,8 @@ module.exports = {
                 options:{
                     // loader: 'babel-loader',
                     cacheDirectory: true, // 开启babel缓存
-                    cacheCompression:false // 关闭缓存的压缩
+                    cacheCompression:false, // 关闭缓存的压缩
+                     plugins: ["@babel/plugin-transform-runtime"]
                     // options: {
                     //     presets: ['@babel/preset-env']
                     // }

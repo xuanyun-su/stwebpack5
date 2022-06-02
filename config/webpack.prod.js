@@ -6,6 +6,7 @@ const MiniCssExtractPlugin =  require('mini-css-extract-plugin')
 const CssMinmizePlugin = require("css-minimizer-webpack-plugin")
 const threads = os.cpus().length // cpu核数
 const TerserWebpackPlugin = require('terser-webpack-plugin')
+const ImageMinimizerPlugin = require("image-minimizer-webpack-plugin")
 function getStyleLoader(pre){
     return [
                     MiniCssExtractPlugin.loader,
@@ -104,7 +105,8 @@ module.exports = {
                 options:{
                     // loader: 'babel-loader',
                     cacheDirectory: true, // 开启babel缓存
-                    cacheCompression:false // 关闭缓存的压缩
+                    cacheCompression:false, // 关闭缓存的压缩
+                    plugins: ["@babel/plugin-transform-runtime"]
                     // options: {
                     //     presets: ['@babel/preset-env']
                     // }
@@ -135,12 +137,40 @@ module.exports = {
         // new TerserWebpackPlugin({
         //     parallel:threads
         // })
+
     ],
     optimization:{
     minimizer:[
     // 压缩js
     new TerserWebpackPlugin({
             parallel:threads
+        }),
+      new ImageMinimizerPlugin({
+            minimizer:{
+                implementation: ImageMinimizerPlugin.imageminGenerate,
+                options:{
+                    plugins:[
+                    ['gifsicle',{interlaced:true}],
+                    ['jpegtran',{progressive: true},
+                    ['optipng'],{opyimizationLevel:5}],
+                    [
+                    "svgo",
+                    {
+                        plugins:[
+                        "preset-default",
+                        'prefixIds',
+                        {
+                            name: " sortAttrs",
+                            params:{
+                                xminsOrder:'alphabetical',
+                            }
+                        }
+                        ]
+                    }
+                    ]
+                    ]
+                }
+            }
         })
     ]
 },
