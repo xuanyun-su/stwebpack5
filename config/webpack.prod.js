@@ -28,7 +28,12 @@ module.exports = {
     entry:"./src/main.js",
     output:{
         path:path.resolve(__dirname,"../dist"),
-        filename:"static/js/main.js",
+        // 入口文件打包输出文件名
+        filename:"static/js/[name].js",
+        // 给打包输出的其他文件命名
+        chunkFilename:'static/js/[name].chunk.js',
+        // 图片，字体等通过type:asset处理资源命名方式
+        assetModuleFilename: "static/media/[hash:10][ext][query]",
         clean: true,
     },
     module:{
@@ -131,7 +136,8 @@ module.exports = {
             template: path.resolve(__dirname,"../public/index.html")
         }),
         new MiniCssExtractPlugin({
-            filename:"static/css/main.css"
+            filename:"static/css/[name].css",
+            chunkFilename: "static/css/[name].chunk.css",
         }),
         new CssMinmizePlugin(),
         // new TerserWebpackPlugin({
@@ -172,7 +178,15 @@ module.exports = {
                 }
             }
         })
-    ]
+    ],
+    // 代码分割操作
+    splitChunks: {
+        chunks: "all",
+        // 其他的都用默认值就好
+    },
+    // runtimeChunk: {
+    //     name: entrypoint => `runtime~${entrypoint.name}.js`
+    // }
 },
     devServer:{
         host:"localhost",
